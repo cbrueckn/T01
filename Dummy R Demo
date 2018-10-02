@@ -1,0 +1,47 @@
+# Install and load required packages
+required = c('ggplot2', 'plyr', 'spatstat', 'tiff', 'raster')
+for (lib in required)
+{
+  if (!require(lib, character.only=TRUE))
+  {
+    install.packages(lib, repos="http://cran.rstudio.com")
+    suppressMessages(library(lib, character.only=TRUE, quietly=TRUE))
+  }
+}
+
+# Class to represent a phenotype and expression level
+PhenExp <- setRefClass("PhenExp",
+  fields = list(
+    name = "character",
+    expression = 'character',
+    threshold = 'numeric',
+    nickname = 'character',
+    color = 'character'
+  ),
+  methods = list(
+    show = function() {
+      cat('Phenotype:', name, nickname, '\n')
+      cat(expression, '>', threshold, '\n')
+    },
+    fullname = function() 
+      ifelse(nickname=='', name, paste(nickname, name))
+  )
+)
+
+phenotypeName = 'Phenotype' # Name of the phenotype column in the cell seg data
+pixelsPerMicron = 2
+
+# Columns that must be in every data set
+fixedColumns = c('Cell ID', 'Cell X Position', 'Cell Y Position', phenotypeName)
+nfixed = length(fixedColumns)
+
+#' Read a cell seg table and compute distance between positively expressing phenotypes.
+#' @param cellTablePath Path to the source file
+#' @param outPath Path to the result
+#' @param pheno1 PhenExp of the 'from' phenotype
+#' @param pheno2 PhenExp of the 'to' phenotype
+#' @param plot If TRUE, output a plot showing the from and to data with lines to the nearest neigbors
+computeExpressionDistance = function(
+  cellTablePath, outPath,
+  pheno1, pheno2, plot=TRUE
+)
